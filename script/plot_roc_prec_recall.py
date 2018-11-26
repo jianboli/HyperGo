@@ -4,6 +4,14 @@ import matplotlib.pylab as plt
 
 
 def plot_roc(fpr, tpr, roc_auc):
+    """Generate the ROC Curve
+    
+    Arguments:
+        fpr {numpy 1 d array} -- [false positive rate]
+        tpr {numpy 1d array} -- [ture postive rate]
+        roc_auc {float} -- [Area under roc curve]
+    """
+
     lw = 2
     plt.plot(fpr, tpr, color='darkorange',
              lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
@@ -16,6 +24,14 @@ def plot_roc(fpr, tpr, roc_auc):
     plt.legend(loc="lower right")
 
 def plot_prec_recall(prec, recall, maximum_f1):
+    """Generate the precision recall curve
+    
+    Arguments:
+        prec {[numpy 1 d array]} -- [precision]
+        recall {[numpy 1 d array]} -- [recall]
+        maximum_f1 {[float]} -- [f1 score]
+    """
+
     lw = 2
     plt.plot(recall, prec, color='darkorange',
              lw=lw, label='maximum F1 %0.2f ' % maximum_f1)

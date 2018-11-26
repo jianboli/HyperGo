@@ -8,10 +8,9 @@ from sklearn import metrics
 
 from itertools import compress
 from src.hyper_graph import HyperGraph
-from src.Nibble import Nibble
+from src.nibble import nibble
 from src.functions import f_point_5, argmax
 import time
-
 
 def _HypergraphPredictor__eval_i(args):
     g_i = args[0]
@@ -20,7 +19,7 @@ def _HypergraphPredictor__eval_i(args):
     ratio = args[3]
     step = args[4]
     last_idx = len(g_i.vertex_name)-1
-    res = Nibble(g_i, last_idx, b, phi, False)
+    res = nibble(g_i, last_idx, b, phi)
 
     res = res[res != last_idx]
     if(len(res) != 0):
@@ -84,7 +83,7 @@ def _HypergraphPredictor__time_i(args):
     step = args[4]
     last_idx = len(g_i.vertex_name)-1
     st = time.time()
-    res = Nibble(g_i, last_idx, b, phi, False)
+    res = nibble(g_i, last_idx, b, phi)
     ed = time.time()
     return len(res), ed-st
 

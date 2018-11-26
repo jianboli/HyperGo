@@ -6,7 +6,7 @@ from sklearn import metrics
 # from scoop import futures
 
 from src.hyper_graph import HyperGraph
-from src.Nibble import Nibble
+from src.nibble import nibble
 # constants ==========================================
 # parallel 0: single thread
 #          1: multiprocessing package
@@ -65,7 +65,7 @@ def eval_i(args):
     b = args[1]
     phi = args[2]
     last_idx = len(g_i.vertex_name)-1
-    res = Nibble(g_i, last_idx, b, phi, False)
+    res = nibble(g_i, last_idx, b, phi)
 
     res = res[res != last_idx]
     if(len(res) != 0):

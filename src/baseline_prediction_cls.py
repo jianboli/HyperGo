@@ -2,7 +2,7 @@ import pandas as pd
 import pickle
 import numpy as np
 from sklearn import metrics
-# import matplotlib.pylab as plt
+import matplotlib.pylab as plt
 from src.functions import f_point_5
 
 
