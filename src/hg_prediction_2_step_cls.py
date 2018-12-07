@@ -110,7 +110,7 @@ class HypergraphPredictor:
 
     def fit(self, h_train, bsk_label_train, order_no_train,
             khk_ean_train, return_rate_train, r_train,
-            multi_item_bsk, ratio = None, step = 2):
+            ratio = None, step = 2):
         """
 
         :param h_train:
@@ -119,8 +119,10 @@ class HypergraphPredictor:
         :param ratio:
         :return:
         """
-        self.multi_item_bsk = multi_item_bsk.index.values
-        multi_idx = np.in1d(bsk_label_train.index.values, self.multi_item_bsk)
+        multi_item_bsk = (h_train>1).nonzero()[0]
+        multi_idx = np.zeros(h_train.shape[0], dtype=bool)
+        multi_idx[multi_item_bsk] = True
+        #multi_idx = np.in1d(bsk_label_train.index.values, self.multi_item_bsk)
         if ratio is None:
             ratio = bsk_label_train[multi_idx].sum()[0]/multi_idx.sum() / \
                 (bsk_label_train[np.logical_not(multi_idx)].sum()[0]/np.logical_not(multi_idx).sum())
@@ -141,8 +143,10 @@ class HypergraphPredictor:
         :return: since order are not preserved, label are returned together with prediction
         """
         # this is assume we are in python 3!!
-        multi_idx = np.in1d(bsk_label_test.index.values, self.multi_item_bsk)
-
+        #multi_idx = np.in1d(bsk_label_test.index.values, self.multi_item_bsk)
+        multi_item_bsk = (h_test >1).nonzero()[0]
+        multi_idx = np.zeros(h_test.shape[0], dtype=bool)
+        multi_idx[multi_item_bsk] = True
         if self.parallel == "Multi":
             pool = Pool(processes=self.n_cpu)
             pred_rst = \
@@ -281,8 +285,9 @@ class HypergraphPredictor:
         :return: since order are not preserved, label are returned together with prediction
         """
         # this is assume we are in python 3!!
-        multi_idx = np.in1d(bsk_label_test.index.values, self.multi_item_bsk)
-
+        multi_item_bsk = (h_test >1).nonzero()[0]
+        multi_idx = np.zeros(h_test.shape[0], dtype=bool)
+        multi_idx[multi_item_bsk] = True
         if self.parallel == "Multi":
             pool = Pool(processes=self.n_cpu)
             pred_rst = \
@@ -335,41 +340,41 @@ class HypergraphPredictor:
 
 if __name__ == "__main__":
 
-    with open("data/clean/order_no_train.pkl", 'rb') as f:
+    with open("../data/order_no_train.pkl", 'rb') as f:
         order_no_train = pickle.load(f)
-    with open("data/clean/khk_ean_train.pkl", 'rb') as f:
+    with open("../data/khk_ean_train.pkl", 'rb') as f:
         khk_ean_train = pickle.load(f)
-    bsk_label_train = pd.read_pickle("data/clean/bsk_label_train.pkl")
-    return_rate_train = pd.read_pickle("data/clean/return_rate_train.pkl")
-    with open("data/clean/h_train.pkl", 'rb') as f:
+    bsk_label_train = pd.read_pickle("../data/bsk_label_train.pkl")
+    return_rate_train = pd.read_pickle("../data/return_rate_train.pkl")
+    with open("../data/h_train.pkl", 'rb') as f:
         h_train = pickle.load(f)
-    with open("data/clean/r_train.pkl", 'rb') as f:
+    with open("../data/r_train.pkl", 'rb') as f:
         r_train = pickle.load(f)
 
-    with open("data/clean/h_validate.pkl", 'rb') as f:
+    with open("../data/h_validate.pkl", 'rb') as f:
         h_validate = pickle.load(f)
-    with open("data/clean/r_validate.pkl", 'rb') as f:
+    with open("../data/r_validate.pkl", 'rb') as f:
         r_validate = pickle.load(f)
-    with open("data/clean/order_no_validate.pkl", 'rb') as f:
+    with open("../data/order_no_validate.pkl", 'rb') as f:
         order_no_validate = pickle.load(f)
-    bsk_label_validate = pd.read_pickle("data/clean/bsk_label_validate.pkl")
+    bsk_label_validate = pd.read_pickle("../data/bsk_label_validate.pkl")
 
 
-    with open("data/clean/h_test.pkl", 'rb') as f:
+    with open("../data/h_test.pkl", 'rb') as f:
         h_test = pickle.load(f)
-    with open("data/clean/r_test.pkl", 'rb') as f:
+    with open("../data/r_test.pkl", 'rb') as f:
         r_test = pickle.load(f)
-    with open("data/clean/order_no_test.pkl", 'rb') as f:
+    with open("../data/order_no_test.pkl", 'rb') as f:
         order_no_test = pickle.load(f)
-    bsk_label_test = pd.read_pickle("data/clean/bsk_label_test.pkl")
+    bsk_label_test = pd.read_pickle("../data/bsk_label_test.pkl")
 
-    multi_item_bsk = pd.read_pickle("data/clean/multi_item_bsk_return_label.pkl")
-    bsk_ret_item_collection = pd.read_pickle("data/clean/bsk_return_item_collection.pkl")
+    #multi_item_bsk = pd.read_pickle("../data/multi_item_bsk_return_label.pkl")
+    #bsk_ret_item_collection = pd.read_pickle("../data/bsk_return_item_collection.pkl")
 
     # Construct graph ====================================
     p = HypergraphPredictor(max_num_test=100, parallel="Single", n_cpu=7, chunk_size=1)
     p.fit(h_train, bsk_label_train, order_no_train, khk_ean_train,
-          return_rate_train, r_train, multi_item_bsk, ratio=None, step = 1)
+          return_rate_train, r_train, ratio=None, step = 1)
 
     h_validate = h_validate[bsk_label_validate['RET_Items'].values,:]
     order_no_validate = list(compress(order_no_validate, bsk_label_validate['RET_Items'].values))

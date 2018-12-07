@@ -5,15 +5,15 @@ import pandas as pd
 
 from src.pre_process_cls import SplitTrainValidateTest
 from src.baseline_prediction_2_step_cls import BaseLinePredictor
-from src.knn_prediction_2_step_cls import knn_Predictor
+from src.knn_prediction_2_step_norm_cls import knn_Predictor_Norm
 #from src.hg_prediction_cls import HypergraphPredictor
 from src.hg_prediction_2_step_cls import HypergraphPredictor
 from itertools import compress
 
-input_path = 'data/clean/'
-output_path = 'data/split_'
-result_path = 'rst'
-seeds = range(10)
+input_path = '../data/'
+output_path = '../data/split_'
+result_path = '../rst'
+seeds = range(3)
 step = 2 # step 1, conditional probability
          # step 2, marginal probability
          # for basket level prediction use 2
@@ -57,8 +57,8 @@ for sd in seeds:
         order_no_test = pickle.load(f)
     bsk_label_test = pd.read_pickle(output_path_sd + "bsk_label_test.pkl")
 
-    multi_item_bsk = pd.read_pickle(input_path + "multi_item_bsk_return_label.pkl")
-    bsk_ret_item_collection = pd.read_pickle(input_path + "bsk_return_item_collection.pkl")
+    #multi_item_bsk = pd.read_pickle(input_path + "multi_item_bsk_return_label.pkl")
+    #bsk_ret_item_collection = pd.read_pickle(input_path + "bsk_return_item_collection.pkl")
 
     # Ground Truth ============================================================
     if step == 1:
@@ -74,57 +74,25 @@ for sd in seeds:
         r_test = r_test[idx, :]
         bsk_label_test = bsk_label_test.iloc[idx,:]
 
-    # Unnormalized base line =============================
-    p = BaseLinePredictor()
-    p.fit(h_train, r_train, bsk_label_train, step=step)
-
-    prec, rec, f, auc, fpr, tpr, thr = \
-        p.pred_test_based_on_valid_prod(h_validate, bsk_label_validate, r_validate, h_test, bsk_label_test, r_test)
-
-    with open(result_path + "/baseline.csv", 'a+') as ff:
-        ff.write("%f, %f, %f, %f, %f, %f\n" % (sd, thr, auc, prec, rec, f))
-    fpr_tpr = pd.DataFrame({'fpr':fpr,  'tpr':tpr})
-    fpr_tpr.to_csv("%s/baseline_fpr_tpr_%d.csv" % (result_path, sd))
-
-    # Normalized based line ================================
-    p = BaseLinePredictor(type="Normalized")
-    p.fit(h_train, r_train, bsk_label_train, multi_item_bsk, ratio=None, step=step)
-
-    prec, rec, f, auc, fpr, tpr, thr = \
-        p.pred_test_based_on_valid_prod(h_validate, bsk_label_validate, r_validate, h_test, bsk_label_test, r_test)
-
-    with open(result_path + "/baseline_norm.csv", 'a+') as ff:
-        ff.write("%f, %f, %f, %f, %f, %f\n" % (sd, thr, auc, prec, rec, f))
-    fpr_tpr = pd.DataFrame({'fpr':fpr,  'tpr':tpr})
-    fpr_tpr.to_csv("%s/baseline_norm_fpr_tpr_%d.csv" % (result_path, sd))
 
     # k-nn ================================================
-    p = knn_Predictor(k=5)
-    p.fit(h_train, bsk_label_train, r_train, step=step)
+    def h_to_multi(h):
+        multi_item_bsk = (h >1).nonzero()[0]
+        multi_idx = np.zeros(h.shape[0], dtype=bool)
+        multi_idx[multi_item_bsk] = True
+        return  multi_idx
+
+    multi_idx_train = h_to_multi(h_train)
+    p = knn_Predictor_Norm(k=5)
+    p.fit(h_train, bsk_label_train, r_train, multi_idx_train, step=step)
+
+    multi_idx_validate = h_to_multi(h_validate)
+    multi_idx_test = h_to_multi(h_test)
     prec, rec, f, auc, fpr, tpr, thr, k = \
-        p.pred_test_based_on_valid_prod(h_validate, bsk_label_validate, r_validate,
-                                        h_test, bsk_label_test, r_test,
+        p.pred_test_based_on_valid_prod(h_validate, bsk_label_validate, r_validate, multi_idx_validate,
+                                        h_test, bsk_label_test, r_test, multi_idx_test,
                                         [10, 15, 20, 25])
     with open(result_path + "/knn.csv", 'a+') as ff:
         ff.write("%f, %f, %f, %f, %f, %f, %f\n" % (sd, k, thr, auc, prec, rec, f))
     fpr_tpr = pd.DataFrame({'fpr':fpr,  'tpr':tpr})
     fpr_tpr.to_csv("%s/knn_fpr_tpr_%d.csv" % (result_path, sd))
-
-    """
-    # hyper graph ====================================
-    p = HypergraphPredictor(max_num_test=1000, parallel="Multi", n_cpu=15, chunk_size=1)
-    p.fit(h_train, bsk_label_train, order_no_train, khk_ean_train,
-          return_rate_train, r_train, multi_item_bsk, ratio=None, step=step)
-
-    prec, rec, f, auc, fpr, tpr, thr, b, phi = \
-        p.pred_test_based_on_valid_prod(h_validate, bsk_label_validate, order_no_validate, r_validate,
-                                   h_test, bsk_label_test, order_no_test, r_test,
-                                   [6, 7, 8, 9, 10],
-                                   [0.8, 0.6, 0.4, 0.3])
-
-    with open(result_path + "/hypergraph.csv", 'a+') as ff:
-        ff.write("%f, %f, %f, %f, %f, %f, %f, %f\n" % (sd, b, phi, thr, auc, prec, rec, f))
-    fpr_tpr = pd.DataFrame({'fpr':fpr,  'tpr':tpr})
-    fpr_tpr.to_csv("%s/hypergraph_fpr_tpr_%d.csv" % (result_path, sd))
-
-    """

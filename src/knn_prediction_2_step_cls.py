@@ -124,21 +124,21 @@ class knn_Predictor:
 
 if __name__ == "__main__":
 
-    with open("data/clean/h_train.pkl", 'rb') as f:
+    with open("../data/h_train.pkl", 'rb') as f:
         h_train = pickle.load(f)
-    with open("data/clean/r_train.pkl", 'rb') as f:
+    with open("../data/r_train.pkl", 'rb') as f:
         r_train = pickle.load(f)
-    with open("data/clean/h_validate.pkl", 'rb') as f:
+    with open("../data/h_validate.pkl", 'rb') as f:
         h_validate = pickle.load(f)
-    with open("data/clean/h_test.pkl", 'rb') as f:
+    with open("../data/h_test.pkl", 'rb') as f:
         h_test = pickle.load(f)
-    bsk_label_train = pd.read_pickle('data/clean/bsk_label_train.pkl')
-    bsk_label_valid = pd.read_pickle("data/clean/bsk_label_validate.pkl")
-    bsk_label_test = pd.read_pickle('data/clean/bsk_label_test.pkl')
+    bsk_label_train = pd.read_pickle('../data/bsk_label_train.pkl')
+    bsk_label_valid = pd.read_pickle("../data/bsk_label_validate.pkl")
+    bsk_label_test = pd.read_pickle('../data/bsk_label_test.pkl')
 
-    with open("data/clean/r_validate.pkl", 'rb') as f:
+    with open("../data/r_validate.pkl", 'rb') as f:
         r_validate = pickle.load(f)
-    with open("data/clean/r_test.pkl", 'rb') as f:
+    with open("../data/r_test.pkl", 'rb') as f:
         r_test = pickle.load(f)
     # k-d tree
     p = knn_Predictor(k=5)

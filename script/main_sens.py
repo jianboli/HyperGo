@@ -9,13 +9,13 @@ from src.functions import f_point_5
 from src.hg_prediction_2_step_cls import HypergraphPredictor
 from itertools import compress
 if __name__ == "__main__":
-    input_path = 'data/clean/'
-    output_path = 'data/split_'
-    result_path = 'rst'
+    input_path = '../data/'
+    output_path = '../data/split_'
+    result_path = '../rst'
 
     opt_result_path = 'rst/Basket_DataSet_1/' # an optimal values is supposed to have been supplied
 
-    seeds = range(10)
+    seeds = range(2)
     step = 2 # step 1, conditional probability
              # step 2, marginal probability
              # for basket level prediction use 2
@@ -62,8 +62,9 @@ if __name__ == "__main__":
             order_no_test = pickle.load(f)
         bsk_label_test = pd.read_pickle(output_path_sd + "bsk_label_test.pkl")
 
-        multi_item_bsk = pd.read_pickle(input_path + "multi_item_bsk_return_label.pkl")
-        bsk_ret_item_collection = pd.read_pickle(input_path + "bsk_return_item_collection.pkl")
+        # multi_item_bsk = pd.read_pickle(input_path + "multi_item_bsk_return_label.pkl")
+
+        # bsk_ret_item_collection = pd.read_pickle(input_path + "bsk_return_item_collection.pkl")
 
         # Ground Truth ============================================================
         if step == 1:
@@ -82,8 +83,8 @@ if __name__ == "__main__":
         # hyper graph ====================================
         p = HypergraphPredictor(max_num_test=300, parallel="Multi", n_cpu=7, chunk_size=1)
         p.fit(h_train, bsk_label_train, order_no_train, khk_ean_train,
-              return_rate_train, r_train, multi_item_bsk, ratio=None, step=step)
-        bs = [4.5, 10, 11]
+              return_rate_train, r_train, ratio=None, step=step)
+        bs = [4.5, 5, 6]
         phis = []
         best_b = 5 # opt_hg.loc[idx, 'b']
         best_phi = 0.9 # opt_hg.loc[idx, 'phi']

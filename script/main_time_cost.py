@@ -7,9 +7,9 @@ from src.baseline_prediction_cls import BaseLinePredictor
 from src.knn_prediction_cls import knn_Predictor
 from src.hg_prediction_2_step_cls import HypergraphPredictor
 
-input_path = 'data/clean/'
-output_path = 'data/split_'
-result_path = 'rst'
+input_path = '../data/'
+output_path = '../data/split_'
+result_path = '../rst'
 seeds = range(1)
 
 split = SplitTrainValidateTest(0.6, 0.2)
@@ -53,13 +53,13 @@ for sd in seeds:
         order_no_test = pickle.load(f)
     bsk_label_test = pd.read_pickle(output_path_sd + "bsk_label_test.pkl")
 
-    multi_item_bsk = pd.read_pickle(input_path + "multi_item_bsk_return_label.pkl")
-    bsk_ret_item_collection = pd.read_pickle(input_path + "bsk_return_item_collection.pkl")
+    #multi_item_bsk = pd.read_pickle(input_path + "multi_item_bsk_return_label.pkl")
+    #bsk_ret_item_collection = pd.read_pickle(input_path + "bsk_return_item_collection.pkl")
 
     # hyper graph ====================================
     p = HypergraphPredictor(max_num_test=300, parallel="Multi", n_cpu=7, chunk_size=1)
     p.fit(h_train, bsk_label_train, order_no_train, khk_ean_train,
-          return_rate_train, r_train, multi_item_bsk, ratio=None, step=2)
+          return_rate_train, r_train, ratio=None, step=2)
 
     s, t = p.timing(h_validate, bsk_label_validate, order_no_validate, r_validate,
                     [6, 7, 8, 9, 10],

@@ -3,14 +3,17 @@ import numpy as np
 import pandas as pd
 from multiprocessing import Pool
 from sklearn import metrics
-# from scoop import futures
+try:
+    from scoop import futures
+except ImportError:
+    pass
 
 from src.hyper_graph import HyperGraph
 from src.nibble import nibble
 # constants ==========================================
 # parallel 0: single thread
 #          1: multiprocessing package
-#          2: scoop package
+#          2: scoop package, if choose this, please make sure the scoop package is installed
 parallel = 1
 
 max_num_test = 1000
@@ -21,37 +24,45 @@ bs = [13] #np.linspace(9, 9, 1)
 phis = [0.6] #np.linspace(0.4, 0.8, 1)
 
 test_set = "validate"
+
 # Load data ==========================================
-with open("data/clean/order_no_train.pkl", 'rb') as f:
+with open("../data/order_no_train.pkl", 'rb') as f:
     order_no_train = pickle.load(f)
-with open("data/clean/khk_ean_train.pkl", 'rb') as f:
+with open("../data/khk_ean_train.pkl", 'rb') as f:
     khk_ean_train = pickle.load(f)
-bsk_label_train = pd.read_pickle("data/clean/bsk_label_train.pkl")
-return_rate_train = pd.read_pickle("data/clean/return_rate_train.pkl")
-with open("data/clean/h_train.pkl", 'rb') as f:
+
+with open("../data/h_train.pkl", 'rb') as f:
     h_train = pickle.load(f)
-with open("data/clean/r_train.pkl", 'rb') as f:
+with open("../data/r_train.pkl", 'rb') as f:
     r_train = pickle.load(f)
 
-with open("data/clean/h_"+ test_set +".pkl", 'rb') as f:
-    h_test = pickle.load(f)
-with open("data/clean/r_"+ test_set +".pkl", 'rb') as f:
-    r_test = pickle.load(f)
-with open("data/clean/order_no_"+ test_set +".pkl", 'rb') as f:
-    order_no_test = pickle.load(f)
-bsk_label_test = pd.read_pickle("data/clean/bsk_label_"+ test_set +".pkl")
-multi_item_bsk = pd.read_pickle("data/clean/multi_item_bsk_return_label.pkl")
+bsk_label_train = pd.read_pickle("../data/bsk_label_train.pkl")
+return_rate_train = pd.read_pickle("../data/return_rate_train.pkl")
 
-bsk_ret_item_collection = pd.read_pickle("data/clean/bsk_return_item_collection.pkl")
+with open("../data/h_"+ test_set +".pkl", 'rb') as f:
+    h_test = pickle.load(f)
+with open("../data/r_"+ test_set +".pkl", 'rb') as f:
+    r_test = pickle.load(f)
+with open("../data/order_no_"+ test_set +".pkl", 'rb') as f:
+    order_no_test = pickle.load(f)
+
+bsk_label_test = pd.read_pickle("../data/bsk_label_"+ test_set +".pkl")
+
+# bsk_ret_item_collection = pd.read_pickle("../data/bsk_return_item_collection.pkl")
+
 # Construct graph ====================================
-multi_idx = np.in1d(bsk_label_train.index.values, multi_item_bsk.index.values)
+multi_item_bsk = (h_train>1).nonzero()[0]
+multi_idx = np.zeros((len(bsk_label_train)), dtype=bool)
+multi_idx[multi_item_bsk] = True
 ratio = bsk_label_train[multi_idx].sum()[0]/multi_idx.sum() /\
         (bsk_label_train[np.logical_not(multi_idx)].sum()[0]/np.logical_not(multi_idx).sum())
 # ratio = 3
 
 bsk_label_train.loc[multi_idx, 'RET_Items'] = bsk_label_train.loc[multi_idx, 'RET_Items']/ratio
 
-multi_idx = np.in1d(bsk_label_test.index.values, multi_item_bsk.index.values)
+multi_item_bsk = (h_test>1).nonzero()[0]
+multi_idx = np.zeros((len(bsk_label_test)), dtype=bool)
+multi_idx[multi_item_bsk] = True
 bsk_label_test.loc[multi_idx, 'RET_Items'] = bsk_label_test.loc[multi_idx, 'RET_Items']/ratio
 
 g = HyperGraph(order_no_train, khk_ean_train,
@@ -108,7 +119,7 @@ for b in bs:
             pred_rst = list(futures.map(eval_i, all_test))
 
         pred_rst = pd.DataFrame(pred_rst, columns=['pred_prob', 'obs'])
-        pred_rst.to_csv("rst/prediction.csv")
+        pred_rst.to_csv("../rst/prediction.csv")
 
         fpr, tpr, thr_fpr_tpr = metrics.roc_curve(pred_rst['obs'], pred_rst['pred_prob'], pos_label=True)
         roc_auc = metrics.auc(fpr, tpr)
@@ -120,7 +131,7 @@ for b in bs:
         max_f1_idx = np.argmax(f1)
         print("%f, %f: %f, %f, %f, %f" %
               (b, phi, roc_auc, prec[max_f1_idx], recall[max_f1_idx], f1[max_f1_idx]), thr_prec_recall[max_f1_idx])
-        with open('rst/b_phi_tune.csv', 'a+') as f:
+        with open('../rst/b_phi_tune.csv', 'a+') as f:
             f.write("%f, %f: %f, %f, %f, %f\n" %
                     (b, phi, roc_auc, prec[max_f1_idx], recall[max_f1_idx], f1[max_f1_idx]))
 #

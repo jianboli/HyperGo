@@ -21,7 +21,6 @@ class BaseLinePredictor:
         self.h_train = None
         self.bsk_label_train = None
         self.__union_train = None
-        self.multi_item_bsk = None
         self.ratio = None
         self.step = 1
 
@@ -33,6 +32,10 @@ class BaseLinePredictor:
         :param bsk_label_train: a single column data frame
         :return: None
         """
+        multi_item_bsk = (h_train>1).nonzero()[0]
+        multi_idx = np.zeros(h_train.shape[0], dtype=bool)
+        multi_idx[multi_item_bsk] = True
+
         h_train = h_train.sign()
         self.h_train = h_train
         self.r_train = r_train
@@ -40,10 +43,6 @@ class BaseLinePredictor:
         self.__union_train = h_train.sum(1)
 
         if self.type == "Normalized":
-            assert multi_item_bsk is not None, "multi_item_bsk must be supplied for normalization!"
-
-            self.multi_item_bsk = multi_item_bsk
-            multi_idx = np.in1d(bsk_label_train.index.values, multi_item_bsk.index.values)
             if ratio is None:
                 self.ratio = bsk_label_train[multi_idx].sum()[0]/multi_idx.sum() /\
                     (bsk_label_train[np.logical_not(multi_idx)].sum()[0]/np.logical_not(multi_idx).sum())
@@ -56,19 +55,18 @@ class BaseLinePredictor:
 
         self.step = step
 
-    def predict(self, h_test, r_test, test_bsk_name=None):
+    def predict(self, h_test, r_test):
         """
         Predict the result based on given h_test
         :param h_test: a csr_matrix
         :return: a list of prediction (continuous score)
         """
+        multi_item_bsk = (h_test>1).nonzero()[0]
         h_test_sign = h_test.sign()
         wgt = np.ones((h_test_sign.shape[0]))
         if self.type == "Normalized":
-            assert test_bsk_name is not None, "test_bsk_name must be supplied for normalization"
-            multi_idx = np.in1d(test_bsk_name, self.multi_item_bsk.index.values)
-
-            wgt[multi_idx] = self.ratio
+            #assert test_bsk_name is not None, "test_bsk_name must be supplied for normalization"
+            wgt[multi_item_bsk] = self.ratio
         h_mat = self.h_train.sign()
         intersect = h_mat * h_test_sign.T
 
@@ -140,7 +138,7 @@ class BaseLinePredictor:
         :param phis:
         :return:
         """
-        pred_val = self.predict(h_validate, r_validate, bsk_label_valid.index.values)
+        pred_val = self.predict(h_validate, r_validate)
 
         obs_prod = np.array([item for l in pred_val['obs_prod'] for item in l])
         pred_prod = np.array([item for l in pred_val['pred_prob_prod'] for item in l])
@@ -149,7 +147,7 @@ class BaseLinePredictor:
         f = f_point_5(prec, rec)
         thr_opt = thr[np.argmax(f)]
 
-        pred_test = self.predict(h_test, r_test, bsk_label_test.index.values)
+        pred_test = self.predict(h_test, r_test)
         obs_prod = np.array([item for l in pred_test['obs_prod'] for item in l])
         pred_prod = np.array([item for l in pred_test['pred_prob_prod'] for item in l])
 
@@ -164,26 +162,26 @@ class BaseLinePredictor:
 
  
 if __name__ == "__main__":
-
+    import matplotlib.pylab as plt
     # load data
-    with open("data/clean/h_train.pkl", 'rb') as f:
+    with open("../data/h_train.pkl", 'rb') as f:
         h_train = pickle.load(f)
-    with open("data/clean/r_train.pkl", 'rb') as f:
+    with open("../data/r_train.pkl", 'rb') as f:
         r_train = pickle.load(f)
 
-    with open("data/clean/h_validate.pkl", 'rb') as f:
+    with open("../data/h_validate.pkl", 'rb') as f:
         h_validate = pickle.load(f)
-    with open("data/clean/h_test.pkl", 'rb') as f:
+    with open("../data/h_test.pkl", 'rb') as f:
         h_test = pickle.load(f)
 
-    with open("data/clean/r_validate.pkl", 'rb') as f:
+    with open("../data/r_validate.pkl", 'rb') as f:
         r_validate = pickle.load(f)
-    with open("data/clean/r_test.pkl", 'rb') as f:
+    with open("../data/r_test.pkl", 'rb') as f:
         r_test = pickle.load(f)
 
-    bsk_label_train = pd.read_pickle("data/clean/bsk_label_train.pkl")
-    bsk_label_valid = pd.read_pickle("data/clean/bsk_label_validate.pkl")
-    bsk_label_test = pd.read_pickle("data/clean/bsk_label_test.pkl")
+    bsk_label_train = pd.read_pickle("../data/bsk_label_train.pkl")
+    bsk_label_valid = pd.read_pickle("../data/bsk_label_validate.pkl")
+    bsk_label_test = pd.read_pickle("../data/bsk_label_test.pkl")
 
     # unnormalized
 
@@ -201,9 +199,8 @@ if __name__ == "__main__":
     print("%f, %f, %f, %f, %f" % (auc, prec, rec, f, thr))
 
     # normalized
-    multi_item_bsk = pd.read_pickle("data/clean/multi_item_bsk_return_label.pkl")
     p_1 = BaseLinePredictor(type="Normalized")
-    p_1.fit(h_train, r_train, bsk_label_train, multi_item_bsk, 2)
+    p_1.fit(h_train, r_train, bsk_label_train, 2)
 
     prec_1, rec_1, f_1, auc_1, fpr_1, tpr_1, thr =\
         p_1.pred_test_based_on_valid_prod(h_validate, bsk_label_valid, r_validate,

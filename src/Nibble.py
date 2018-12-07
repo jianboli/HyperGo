@@ -154,21 +154,28 @@ def nibble(g, v, b, phi):
 
 if __name__ == "__main__":
     import pickle
-    with open("../data/clean/order_no.pkl", 'rb') as f:
+    with open("../data/order_no.pkl", 'rb') as f:
         order_no = pickle.load(f)
-    with open("../data/clean/KHK_EAN.pkl", 'rb') as f:
+    with open("../data/style_color.pkl", 'rb') as f:
         khk_ean = pickle.load(f)
-    return_rate = pd.read_pickle("../data/clean/return_rate.pkl")
-    with open("../data/clean/h_mat.pkl", 'rb') as f:
+
+    with open("../data/h_mat.pkl", 'rb') as f:
         h = pickle.load(f)
-    bsk_label = pd.read_pickle("../data/clean/bsk_return_label.pkl")
+    with open("../data/r_mat.pkl", 'rb') as f:
+        r = pickle.load(f)
+
+    #return_rate = pd.read_pickle("../data/return_rate.pkl")
+    #bsk_label = pd.read_pickle("../data/bsk_return_label.pkl")
+    bsk_label = pd.DataFrame(r.sum(axis=1)>0, index=order_no, columns=['RET_Items'])
+    return_rate = pd.DataFrame(((r.sum(axis=0)+1)/(h.sum(axis=0)+1)).T, index=khk_ean, columns=['RET_Items'])
+
 
     return_rate = return_rate.loc[khk_ean, :]
     bsk_label = bsk_label.loc[order_no, :]
     g = HyperGraph(order_no, khk_ean, return_rate['RET_Items'].values,
-                   h, bsk_label['RET_Items'].values)
+                   h, bsk_label['RET_Items'].values, r)
 
     b = 4
     phi = 0.5
-    res = nibble(g, 1, b, phi, True)
+    res = nibble(g, 1, b, phi)
     print(res)

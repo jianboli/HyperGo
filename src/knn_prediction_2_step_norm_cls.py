@@ -193,30 +193,33 @@ class knn_Predictor_Norm:
 
 if __name__ == "__main__":
 
-    with open("data/clean/h_train.pkl", 'rb') as f:
+    with open("../data/h_train.pkl", 'rb') as f:
         h_train = pickle.load(f)
-    with open("data/clean/r_train.pkl", 'rb') as f:
+    with open("../data/r_train.pkl", 'rb') as f:
         r_train = pickle.load(f)
-    with open("data/clean/h_validate.pkl", 'rb') as f:
+    with open("../data/h_validate.pkl", 'rb') as f:
         h_validate = pickle.load(f)
-    with open("data/clean/h_test.pkl", 'rb') as f:
+    with open("../data/h_test.pkl", 'rb') as f:
         h_test = pickle.load(f)
-    bsk_label_train = pd.read_pickle('data/clean/bsk_label_train.pkl')
-    bsk_label_valid = pd.read_pickle("data/clean/bsk_label_validate.pkl")
-    bsk_label_test = pd.read_pickle('data/clean/bsk_label_test.pkl')
+    bsk_label_train = pd.read_pickle('../data/bsk_label_train.pkl')
+    bsk_label_valid = pd.read_pickle("../data/bsk_label_validate.pkl")
+    bsk_label_test = pd.read_pickle('../data/bsk_label_test.pkl')
 
-    with open("data/clean/r_validate.pkl", 'rb') as f:
+    with open("../data/r_validate.pkl", 'rb') as f:
         r_validate = pickle.load(f)
-    with open("data/clean/r_test.pkl", 'rb') as f:
+    with open("../data/r_test.pkl", 'rb') as f:
         r_test = pickle.load(f)
     # k-d tree
     p = knn_Predictor_Norm(k=5)
-    multi_item_bsk = pd.read_pickle("data/clean/multi_item_bsk_return_label.pkl")
-    multi_item_bsk = multi_item_bsk.index.values
-    multi_idx_train = np.in1d(bsk_label_train.index.values, multi_item_bsk)
+    def h_to_mutli_item_idx(h):
+        multi_item_bsk = (h>1).nonzero()[0]
+        multi_idx = np.zeros(h.shape[0], dtype=bool)
+        multi_idx[multi_item_bsk] = True
+        return multi_idx
+    multi_idx_train = h_to_mutli_item_idx(h_train)
     p.fit(h_train, bsk_label_train, r_train, multi_idx_train, step=2)
-    multi_idx_valid = np.in1d(bsk_label_valid.index.values, multi_item_bsk)
-    multi_idx_test = np.in1d(bsk_label_test.index.values, multi_item_bsk)
+    multi_idx_test = h_to_mutli_item_idx(h_test)
+    multi_idx_valid = h_to_mutli_item_idx(h_validate)
 
     prec, rec, f, auc, fpr, tpr, thr, k = \
         p.pred_test_based_on_valid(h_validate, bsk_label_valid, r_validate, multi_idx_valid,

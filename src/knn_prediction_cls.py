@@ -88,16 +88,16 @@ class knn_Predictor:
         return prec[idx_f], rec[idx_f], f[idx_f], auc, fpr, tpr, thr[idx_f], ks[idx_k]
 
 if __name__ == "__main__":
-
-    with open("data/clean/h_train.pkl", 'rb') as f:
+    import matplotlib.pylab as plt
+    with open("../data/h_train.pkl", 'rb') as f:
         h_train = pickle.load(f)
-    with open("data/clean/h_validate.pkl", 'rb') as f:
+    with open("../data/h_validate.pkl", 'rb') as f:
         h_validate = pickle.load(f)
-    with open("data/clean/h_test.pkl", 'rb') as f:
+    with open("../data/h_test.pkl", 'rb') as f:
         h_test = pickle.load(f)
-    bsk_label_train = pd.read_pickle('data/clean/bsk_label_train.pkl')
-    bsk_label_valid = pd.read_pickle("data/clean/bsk_label_validate.pkl")
-    bsk_label_test = pd.read_pickle('data/clean/bsk_label_test.pkl')
+    bsk_label_train = pd.read_pickle('../data/bsk_label_train.pkl')
+    bsk_label_valid = pd.read_pickle("../data/bsk_label_validate.pkl")
+    bsk_label_test = pd.read_pickle('../data/bsk_label_test.pkl')
 
     # k-d tree
     p = knn_Predictor(k=5)

@@ -9,19 +9,24 @@ class SplitTrainValidateTest:
         self.validate_rate = validate_rate
         self.test_rate = 1-train_rate-validate_rate
 
-    def read_data(self, src_folder='data/clean'):
+    def read_data(self, src_folder='data/'):
         src_folder = os.path.normpath(src_folder) + os.sep
 
         with open(src_folder + "order_no.pkl", 'rb') as f:
             self.order_no = pickle.load(f)
         with open(src_folder + "style_color.pkl", 'rb') as f:
             self.khk_ean = pickle.load(f)
-        self.return_rate = pd.read_pickle(src_folder + "return_adj_rate.pkl")
+
         with open(src_folder + "h_mat.pkl", 'rb') as f:
             self.h = pickle.load(f)
-        self.bsk_label = pd.read_pickle(src_folder + "bsk_return_label.pkl")
+
         with open(src_folder + "r_mat.pkl", 'rb') as f:
             self.r = pickle.load(f)
+
+        #self.return_rate = pd.read_pickle(src_folder + "return_adj_rate.pkl")
+        #self.bsk_label = pd.read_pickle(src_folder + "bsk_return_label.pkl")
+        self.bsk_label = pd.DataFrame(self.r.sum(axis=1)>0, index=self.order_no, columns=['RET_Items'])
+        self.return_rate = pd.DataFrame(((self.r.sum(axis=0)+1)/(self.h.sum(axis=0)+1)).T, index=self.khk_ean, columns=['RET_Items'])
 
     def random_split(self, seed = 1):
         return_rate = self.return_rate.loc[self.khk_ean, :]
@@ -116,7 +121,7 @@ class SplitTrainValidateTest:
 
 if __name__ == "__main__":
     split = SplitTrainValidateTest(0.6, 0.2)
-    split.read_data('data/clean')
+    split.read_data('../data')
     seed = 0
     split.random_split(seed)
-    split.export_data('data/splitted_'+str(seed))
+    split.export_data('../data/splitted_'+str(seed))

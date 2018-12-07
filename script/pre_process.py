@@ -9,16 +9,21 @@ validate_rate = 0.2
 test_rate = 1-train_rate-validate_rate
 
 # Read data ==========================================
-with open("data/clean/order_no.pkl", 'rb') as f:
+with open("../data/order_no.pkl", 'rb') as f:
     order_no = pickle.load(f)
-with open("data/clean/style_color.pkl", 'rb') as f:
+with open("../data/style_color.pkl", 'rb') as f:
     khk_ean = pickle.load(f)
-return_rate = pd.read_pickle("data/clean/return_adj_rate.pkl")
-with open("data/clean/h_mat.pkl", 'rb') as f:
+with open("../data/h_mat.pkl", 'rb') as f:
     h = pickle.load(f)
-bsk_label = pd.read_pickle("data/clean/bsk_return_label.pkl")
-with open("data/clean/r_mat.pkl", 'rb') as f:
+with open("../data/r_mat.pkl", 'rb') as f:
     r = pickle.load(f)
+
+#bsk_label = pd.read_pickle("../data/bsk_return_label.pkl")
+#return_rate = pd.read_pickle("../data/return_adj_rate.pkl")
+bsk_label = pd.DataFrame(r.sum(axis=1)>0, index=order_no, columns=['RET_Items'])
+return_rate = pd.DataFrame(((r.sum(axis=0)+1)/(h.sum(axis=0)+1)).T, index=khk_ean, columns=['RET_Items'])
+
+
 
 return_rate = return_rate.loc[khk_ean, :]
 bsk_label = bsk_label.loc[order_no, :]
@@ -72,34 +77,35 @@ bsk_label_validate = bsk_label_test[:split_pt]
 bsk_label_test = bsk_label_test[split_pt:]
 
 # write out the files
-with open("data/clean/order_no_train.pkl", 'wb') as f:
+
+with open("../data/order_no_train.pkl", 'wb') as f:
     pickle.dump(order_no_train, f)
-with open("data/clean/khk_ean_train.pkl", 'wb') as f:
+with open("../data/khk_ean_train.pkl", 'wb') as f:
     pickle.dump(khk_ean_train, f)
-with open("data/clean/bsk_label_train.pkl", 'wb') as f:
+with open("../data/bsk_label_train.pkl", 'wb') as f:
     pickle.dump(bsk_label_train, f)
-with open("data/clean/return_rate_train.pkl", 'wb') as f:
+with open("../data/return_rate_train.pkl", 'wb') as f:
     pickle.dump(return_rate_train, f)
-with open("data/clean/h_train.pkl", 'wb') as f:
+with open("../data/h_train.pkl", 'wb') as f:
     pickle.dump(h_train, f)
-with open("data/clean/r_train.pkl", 'wb') as f:
+with open("../data/r_train.pkl", 'wb') as f:
     pickle.dump(r_train, f)
 
 
-with open("data/clean/h_validate.pkl", 'wb') as f:
+with open("../data/h_validate.pkl", 'wb') as f:
     pickle.dump(h_validate, f)
-with open("data/clean/r_validate.pkl", 'wb') as f:
+with open("../data/r_validate.pkl", 'wb') as f:
     pickle.dump(r_validate, f)
-with open("data/clean/order_no_validate.pkl", 'wb') as f:
+with open("../data/order_no_validate.pkl", 'wb') as f:
     pickle.dump(order_no_validate, f)
-with open("data/clean/bsk_label_validate.pkl", 'wb') as f:
+with open("../data/bsk_label_validate.pkl", 'wb') as f:
     pickle.dump(bsk_label_validate, f)
 
-with open("data/clean/h_test.pkl", 'wb') as f:
+with open("../data/h_test.pkl", 'wb') as f:
     pickle.dump(h_test, f)
-with open("data/clean/r_test.pkl", 'wb') as f:
+with open("../data/r_test.pkl", 'wb') as f:
     pickle.dump(r_test, f)
-with open("data/clean/order_no_test.pkl", 'wb') as f:
+with open("../data/order_no_test.pkl", 'wb') as f:
     pickle.dump(order_no_test, f)
-with open("data/clean/bsk_label_test.pkl", 'wb') as f:
+with open("../data/bsk_label_test.pkl", 'wb') as f:
     pickle.dump(bsk_label_test, f)
